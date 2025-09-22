@@ -1,38 +1,47 @@
-import React, { useState } from "react";
-import { Container, Grid, Card, CardContent, Typography } from "@mui/material";
-import Filters from "./components/Filters";
-import Charts from "./components/Charts";
-import EventsTable from "./components/EventsTable";
+import React, { useState } from 'react'
+import {
+  CssBaseline,
+  Container,
+  AppBar,
+  Toolbar,
+  Typography,
+  ThemeProvider,
+  createTheme,
+} from '@mui/material'
+import Filters from './components/Filters'
+import ChartsSection from './components/ChartsSection'
+import EventsTable from './components/EventsTable'
+
+// Light theme with soft background (like your screenshots)
+const theme = createTheme({
+  palette: {
+    background: { default: '#f5f7fb' },
+  },
+  shape: { borderRadius: 12 },
+})
 
 export default function App() {
-  const [filters, setFilters] = useState({});
+  const [filters, setFilters] = useState({})
 
   return (
-    <Container maxWidth="xl" style={{ marginTop: "20px" }}>
-      <Typography variant="h4" gutterBottom align="center">
-        Downtime Dashboard
-      </Typography>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AppBar position="sticky" elevation={0}>
+        <Toolbar>
+          <Typography variant="h6">Downtime Dashboard</Typography>
+        </Toolbar>
+      </AppBar>
 
-      {/* Filters */}
-      <Card style={{ marginBottom: "20px" }}>
-        <CardContent>
-          <Filters onFilterChange={setFilters} />
-        </CardContent>
-      </Card>
+      <Container maxWidth="xl" sx={{ py: 2 }}>
+        {/* Filters at the top */}
+        <Filters onChange={setFilters} />
 
-      {/* Charts */}
-      <Card style={{ marginBottom: "20px" }}>
-        <CardContent>
-          <Charts filters={filters} />
-        </CardContent>
-      </Card>
+        {/* Pareto Charts section */}
+        <ChartsSection filters={filters} />
 
-      {/* Events Table */}
-      <Card>
-        <CardContent>
-          <EventsTable filters={filters} />
-        </CardContent>
-      </Card>
-    </Container>
-  );
+        {/* Events table at the bottom */}
+        <EventsTable filters={filters} />
+      </Container>
+    </ThemeProvider>
+  )
 }

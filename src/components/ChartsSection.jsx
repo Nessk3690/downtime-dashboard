@@ -2,7 +2,7 @@ import React from 'react'
 import { Card, CardContent, Typography } from '@mui/material'
 import ParetoChart from './ParetoChart'
 
-export default function Charts({ filters }) {
+export default function ChartsSection({ filters }) {
   return (
     <>
       <Card sx={{ mb: 2 }}>
