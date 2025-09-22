@@ -91,4 +91,18 @@ export default function EventsTable({ filters }) {
             rows={rows}
             columns={columns}
             rowCount={rowCount}
-            
+            pagination
+            paginationMode="server"
+            page={page}
+            pageSize={pageSize}
+            onPageChange={setPage}
+            onPageSizeChange={setPageSize}
+            rowsPerPageOptions={[25, 50, 100, 200]}
+            disableRowSelectionOnClick
+            loading={loading}
+          />
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
