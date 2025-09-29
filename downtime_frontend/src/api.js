@@ -1,8 +1,7 @@
-import axios from 'axios'
+import axios from "axios";
 
-const client = axios.create({
-  baseURL: '/api',     // Vite proxy → http://10.0.0.134:8000
-  timeout: 20000,
-})
+const api = axios.create({
+  baseURL: "http://10.0.0.134:9000/api",
+});
 
-export default client
+export default api;

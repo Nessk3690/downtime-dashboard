@@ -1,47 +1,34 @@
-import React, { useState } from 'react'
-import {
-  CssBaseline,
-  Container,
-  AppBar,
-  Toolbar,
-  Typography,
-  ThemeProvider,
-  createTheme,
-} from '@mui/material'
-import Filters from './components/Filters'
-import ChartsSection from './components/ChartsSection'
-import EventsTable from './components/EventsTable'
+// ~/downtime-dashboard/downtime_frontend/src/App.jsx
 
-// Light theme with soft background (like your screenshots)
-const theme = createTheme({
-  palette: {
-    background: { default: '#f5f7fb' },
-  },
-  shape: { borderRadius: 12 },
-})
+import React, { useState } from "react";
+import { Container, Typography } from "@mui/material";
+import Filters from "./components/Filters";
+import ChartsSection from "./components/ChartsSection";
+import EventsTable from "./components/EventsTable";
 
 export default function App() {
-  const [filters, setFilters] = useState({})
+  const [filters, setFilters] = useState({});
+  const [start, setStart] = useState(null);
+  const [end, setEnd] = useState(null);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AppBar position="sticky" elevation={0}>
-        <Toolbar>
-          <Typography variant="h6">Downtime Dashboard</Typography>
-        </Toolbar>
-      </AppBar>
+    <Container maxWidth="xl" sx={{ mt: 4 }}>
+      <Typography variant="h4" gutterBottom>
+        Downtime Dashboard 🟢
+      </Typography>
 
-      <Container maxWidth="xl" sx={{ py: 2 }}>
-        {/* Filters at the top */}
-        <Filters onChange={setFilters} />
+      <Filters
+        filters={filters}
+        setFilters={setFilters}
+        start={start}
+        setStart={setStart}
+        end={end}
+        setEnd={setEnd}
+      />
 
-        {/* Pareto Charts section */}
-        <ChartsSection filters={filters} />
+      <ChartsSection filters={filters} start={start} end={end} />
 
-        {/* Events table at the bottom */}
-        <EventsTable filters={filters} />
-      </Container>
-    </ThemeProvider>
-  )
+      <EventsTable filters={filters} start={start} end={end} />
+    </Container>
+  );
 }

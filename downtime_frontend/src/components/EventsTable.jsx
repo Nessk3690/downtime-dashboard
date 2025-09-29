@@ -1,108 +1,92 @@
-import React, { useEffect, useState } from 'react'
-import { Card, CardContent, Typography } from '@mui/material'
-import { DataGrid } from '@mui/x-data-grid'
-import client from '../api'
-import dayjs from 'dayjs'
-import { buildParams } from '../utils'
+// ~/downtime-dashboard/downtime_frontend/src/components/EventsTable.jsx
 
-// Table column setup
-const columns = [
-  { field: 'id', headerName: 'id', width: 80 },
-  { field: 'line', headerName: 'line', width: 160 },
-  { field: 'machine', headerName: 'machine', width: 180 },
-  { field: 'category', headerName: 'category', width: 220 },
-  { field: 'subcategory', headerName: 'subcategory', width: 220 },
-  { field: 'code', headerName: 'code', width: 140 },
-  {
-    field: 'start_time',
-    headerName: 'start epoch',
-    width: 180,
-    valueGetter: (v, row) =>
-      row.start_time ? dayjs(row.start_time).format('M/D/YYYY, h:mm:ss A') : '—',
-  },
-  {
-    field: 'end_time',
-    headerName: 'closeout epoch',
-    width: 180,
-    valueGetter: (v, row) =>
-      row.end_time ? dayjs(row.end_time).format('M/D/YYYY, h:mm:ss A') : '—',
-  },
-]
+import React, { useEffect, useState } from "react";
+import { DataGrid } from "@mui/x-data-grid";
+import { Box, CircularProgress } from "@mui/material";
+import api from "../api"; // this points to your src/api.js file
 
-export default function EventsTable({ filters }) {
-  const [rows, setRows] = useState([])
-  const [rowCount, setRowCount] = useState(0)
-  const [page, setPage] = useState(0)
-  const [pageSize, setPageSize] = useState(25)
-  const [loading, setLoading] = useState(false)
+// Helper: convert epoch seconds -> readable string
+const formatDate = (epoch) => {
+  if (!epoch) return "";
+  const d = new Date(epoch * 1000);
+  return d.toLocaleString();
+};
 
-  // Reset to page 0 when filters change
+export default function EventsTable({ filters, start, end }) {
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(0); // DataGrid is 0-based
+  const [pageSize, setPageSize] = useState(10);
+
   useEffect(() => {
-    setPage(0)
-  }, [filters])
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const params = {
+          page: page + 1, // backend expects 1-based
+          limit: pageSize,
+          ...filters,
+        };
+        if (start) params.start = start.toISOString();
+        if (end) params.end = end.toISOString();
 
-  // Load events from backend
-  useEffect(() => {
-    const query = buildParams({
-      start: filters.start,
-      end: filters.end,
-      line: filters.line,
-      machine: filters.machine,
-      category: filters.category,
-      subcategory: filters.subcategory,
-      code: filters.code,
-      employee_id: filters.employee_id,
-      labour_requested: filters.labour_requested,
-      severity: filters.severity,
-      page: page + 1,
-      limit: pageSize,
-    })
+        const res = await api.get("/events", { params });
+        setRows(
+          res.data.rows.map((row) => ({
+            id: row.id,
+            line: row.line,
+            machine: row.machine,
+            category: row.category,
+            subcategory: row.subcategory,
+            code: row.code,
+            start: formatDate(row.start_epoch),
+            closeout: formatDate(row.closeout_epoch),
+            severity: row.severity,
+            comment: row.comment,
+          }))
+        );
+        setTotal(res.data.total);
+      } catch (err) {
+        console.error("Failed to load events:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    setLoading(true)
-    client
-      .get(`/events?${query}`)
-      .then((res) => {
-        const items = res.data?.items || res.data || []
-        const normalized = items.map((it) => ({
-          id: it.id,
-          line: it.line || it.production_line || '',
-          machine: it.machine || it.machine_name || '',
-          category: it.category || '',
-          subcategory: it.subcategory || '',
-          code: it.code || '',
-          start_time: it.start_time || it.start || it.start_epoch || it.start_dt,
-          end_time: it.end_time || it.end || it.closeout_epoch || it.end_dt,
-        }))
-        setRows(normalized)
-        setRowCount(res.data?.total ?? normalized.length)
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false))
-  }, [filters, page, pageSize])
+    fetchData();
+  }, [filters, start, end, page, pageSize]);
+
+  const columns = [
+    { field: "line", headerName: "Line", flex: 1 },
+    { field: "machine", headerName: "Machine", flex: 1 },
+    { field: "category", headerName: "Category", flex: 1 },
+    { field: "subcategory", headerName: "Subcategory", flex: 1 },
+    { field: "code", headerName: "Code", flex: 1 },
+    { field: "start", headerName: "Start", flex: 1.5 },
+    { field: "closeout", headerName: "Closeout", flex: 1.5 },
+    { field: "severity", headerName: "Severity", flex: 1 },
+    { field: "comment", headerName: "Comment", flex: 2 },
+  ];
 
   return (
-    <Card sx={{ mb: 3 }}>
-      <CardContent>
-        <Typography variant="h6" gutterBottom>
-          Events
-        </Typography>
-        <div style={{ height: 520, width: '100%' }}>
-          <DataGrid
-            rows={rows}
-            columns={columns}
-            rowCount={rowCount}
-            pagination
-            paginationMode="server"
-            page={page}
-            pageSize={pageSize}
-            onPageChange={setPage}
-            onPageSizeChange={setPageSize}
-            rowsPerPageOptions={[25, 50, 100, 200]}
-            disableRowSelectionOnClick
-            loading={loading}
-          />
-        </div>
-      </CardContent>
-    </Card>
-  )
+    <Box sx={{ height: 500, width: "100%" }}>
+      {loading ? (
+        <CircularProgress />
+      ) : (
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          rowCount={total}
+          pagination
+          paginationMode="server"
+          page={page}
+          pageSize={pageSize}
+          onPageChange={(newPage) => setPage(newPage)}
+          onPageSizeChange={(newSize) => setPageSize(newSize)}
+          rowsPerPageOptions={[5, 10, 25, 50, 100]}
+        />
+      )}
+    </Box>
+  );
 }
